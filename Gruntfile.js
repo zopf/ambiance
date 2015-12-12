@@ -20,6 +20,10 @@ module.exports = function(grunt) {
         src: './*.html',
         dest: 'dist/',
         expand: true
+      },
+      js: {
+        src: 'js/freesound.js',
+        dest: 'dist/js/freesound.js'
       }
     }
   });

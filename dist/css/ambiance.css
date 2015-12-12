@@ -15,7 +15,7 @@
 
 .insta.playing img {
   padding: 0px;
-  border: 10px gray solid;  
+  border: 10px gray solid;
 }
 
 .insta .tags {
@@ -25,6 +25,7 @@
 .insta .tags span {
   display: none;
 }
+
 .insta.playing .tags span {
   display: inline;
   color: gray;

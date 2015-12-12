@@ -22,30 +22,97 @@ var Instafeed = require('instafeed.js');
 
 // Now, set up the Freesound API
 var FREESOUND_API_KEY = 'a18861035bd84de6d5c2d0e48c8e8330b49f5fe9';
-var freesound = require('./freesound.js');
+// NOTE: we're not require'ing ./freesound.js because Browserify doesn't play nicely with the XHR calls it makes, apparently
+//   ... instead, we're just copying it into dist and loading it directly
 freesound.setToken(FREESOUND_API_KEY);
 
+// Ok, now some global vars our code uses.
+// a global to hold our currently playing audio objects, so we can e.g. pause them
+var playingAudios = [];
+// a global to hold our local db of images
+var imgDetails = {};
 
-// Great, let's get started.
-// First, a utility function to get a valid ID from an instagram URL
+// Alright!  Now a bunch of functions.
+
+function updateLoadingProgress() {
+  var numberOfImages = $('#images img').length;
+  var numberOfResults = 0;
+  for(imgId in imgDetails) {
+    var details = imgDetails[imgId];
+    if(details.tags)
+      numberOfResults += 1;
+    if(details.sounds)
+      numberOfResults += 1;
+  }
+  var pctLoaded = Math.round(1000*numberOfResults/(2*numberOfImages))/10;
+  $('#loadingbox').text('Loading Progress: '+pctLoaded+'%');
+}
+
 function getIDFromInsta(url) {
-  return url.replace(/^[^a-z]+|[^\w:.-]+/gi, "");
+  return url.replace(/^[^a-z]+|[^\w-]+/gi, "");
+}
+
+function stopAudios() {
+  _.map(playingAudios, function(audio){
+    audio.pause();
+  });
+  playingAudios.length = 0;
+}
+
+function handleImageClick() {
+  stopAudios();
+  var img = $(this);
+  $('#images .insta').removeClass("playing");
+  img.parent().addClass("playing");
+  var imgId = img.attr('id');
+  var sounds = getSoundsForImage(imgId);
+  console.log('sounds for image:', sounds);
+  var soundURLs = _.map(sounds, function(sound){
+    return sound.previews['preview-hq-mp3'];
+  });
+  var audios = _.map(
+    _.uniq(soundURLs), 
+    function(url){
+      return new Audio(url);
+    }
+  );
+  _.map(audios, function(audio){
+    console.log('playing audio', audio);
+    playingAudios.push(audio);
+    $(audio).bind('ended', function()  {
+      audio.currentTime = 0;
+      audio.play();
+    });
+    audio.play();
+  });
 }
 
 function addImgToUI(img, id) {
   $('#images').append(
-    '<div class="insta">'+
-    '<img src="'+img.url+'" id="'+id+'" width="'+img.width+'" height="'+img.height+'" />'+
+    '<div class="insta" id="insta_'+id+'">'+
+    '<img src="'+img.url+'" id="'+id+'" width="'+img.width+'" height="'+img.height+'"/>'+
     '<div class="tags"></div>'+
     '</div>'
   );
 }
 
-// a global to hold our local db of images
-var imgDetails = {};
+function updateImageUI() {
+  $('#images img').on("click", handleImageClick);
+}
 
 function setDetailsForImage(imgId, details) {
   imgDetails[imgId] = details;
+  updateLoadingProgress();
+}
+
+function setTagSubsetForImage(imgId, subset) {
+  imgDetails[imgId].tagSubset = subset;
+  var rendering = _.map(subset, function(tag){
+    return '<span>'+tag+'</span>';
+  });
+  var selector = '#insta_'+imgId+' .tags';
+  console.log('trying to get selector: "'+selector+'"');
+  $(selector).html(rendering.join(', '));
 }
 
 function addSoundForImage(imgId, sound) {
@@ -58,28 +125,40 @@ function addSoundForImage(imgId, sound) {
   }
   imgDetails[imgId].sounds.push(sound);
   console.log('Ok, heres the resulting img details:', imgDetails[imgId]);
+  updateLoadingProgress();
+}
+
+function getSoundsForImage(imgId) {
+  return imgDetails[imgId].sounds;
+}
+
+function removeAnnoyingTags(tags) {
+  return _.without(tags,
+    'no person'
+  );
 }
 
 function fetchSoundsForTags(tagSets) {
   console.log('Beginning fetching sounds for tags.');
   var first = true;
   _.map(tagSets, function(tagSet){
-    if(first) {
-      console.log('Processing first tag set...');
-      first = false;
-    } else {
-      return;
-    }
+    // if(first) {
+    //   console.log('Processing first tag set...');
+    //   first = false;
+    // } else {
+    //   return;
+    // }
     // choose a subset of the tags to process
-    var tagSubset = _.first(tagSet.tags, NUMBER_OF_SOUNDS_TO_MIX);
+    var tagSubset = _.first(removeAnnoyingTags(tagSet.tags), NUMBER_OF_SOUNDS_TO_MIX);
     console.log('Chose the following tags:', tagSubset);
+    setTagSubsetForImage(tagSet.id, tagSubset);
     // select a single sound for each tag in the subset
     _.map(tagSubset, function(tag){
       var query = tag;
       var page = 1;
-      var filter = "duration:[1.0 TO 10.0]";
+      var filter = "duration:[7.0 TO 30.0]";
       var sort = "score";
-      var fields = 'id,name,url';
+      var fields = 'id,name,url,previews';
       console.log('Searching freesound for the tag "'+query+'"...');
       freesound.textSearch(query, {page:page, filter:filter, sort:sort, fields:fields}, 
         function(sounds){
@@ -131,6 +210,7 @@ function handleInstagramResults(instagramRes) {
     addImgToUI(img, id);
     return fullImg.url;
   });
+  updateImageUI();
   // pass to Clarifai for tagging
   tagImages(imgFullURLs);
 }
