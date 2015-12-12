@@ -1,0 +1,18 @@
+.clear {
+  float: none;
+  clear: both;
+}
+
+.insta {
+  float: left;
+  margin: 20px;
+  margin: 20px;
+}
+
+#controls {
+  float: left;
+  padding: 20px;
+  margin: 20px;
+  margin: 20px;
+  border: 1px solid gray;
+}

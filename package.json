@@ -1,0 +1,38 @@
+{
+  "name": "ambiance",
+  "version": "1.0.0",
+  "description": "turn images into soundscapes",
+  "main": "dist/js/ambiance-bundle.js",
+  "dependencies": {
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^4.0.1",
+    "grunt-contrib-clean": "^0.7.0",
+    "grunt-contrib-copy": "^0.8.2",
+    "grunt-rework": "^0.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zopf/ambiance.git"
+  },
+  "keywords": [
+    "ambiance",
+    "sound",
+    "image",
+    "soundscape",
+    "clarifai"
+  ],
+  "author": "Alec Zopf",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zopf/ambiance/issues"
+  },
+  "homepage": "https://github.com/zopf/ambiance#readme",
+  "other-libraries": [
+    "https://github.com/g-roma/freesound.js",
+    "https://github.com/Clarifai/clarifai-nodejs"
+  ]
+}
