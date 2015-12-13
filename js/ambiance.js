@@ -3,7 +3,7 @@ var _ = require('underscore');
 
 // Some operational config vars
 NUMBER_OF_SOUNDS_TO_MIX = 3;
-RANDOM_SOUND_BUCKET_MAX_SIZE = 5;
+RANDOM_SOUND_BUCKET_MAX_SIZE = 10;
 
 // First, set up the Clarifai API
 var CLARIFAI_CLIENT_ID = 'eWVjQFmzVmjYE419gb1_N1a0ZHBEjPY8HpUgF2Nd';
@@ -162,7 +162,6 @@ function fetchSoundsForTags(tagSets) {
       console.log('Searching freesound for the tag "'+query+'"...');
       freesound.textSearch(query, {page:page, filter:filter, sort:sort, fields:fields}, 
         function(sounds){
-          console.log('Got Freesound result!', sounds);
           var randMax = Math.min(sounds.count, RANDOM_SOUND_BUCKET_MAX_SIZE);
           var soundIdx = Math.floor(Math.random()*(randMax-.001));
           console.log('getting sound at index:', soundIdx, 'out of', sounds.count, 'sounds');
